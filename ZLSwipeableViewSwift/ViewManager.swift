@@ -69,7 +69,9 @@ class ViewManager : NSObject {
         super.init()
         
         view.addGestureRecognizer(ZLPanGestureRecognizer(target: self, action: #selector(ViewManager.handlePan(_:))))
-        view.addGestureRecognizer(ZLTapGestureRecognizer(target: self, action: #selector(ViewManager.handleTap(_:))))
+        if swipeableView.didTap != nil {
+            self.addTapRecognizer()
+        }
         miscContainerView.addSubview(anchorView)
         containerView.insertSubview(view, at: index)
     }
@@ -107,7 +109,7 @@ class ViewManager : NSObject {
         view.removeFromSuperview()
     }
     
-    func handlePan(_ recognizer: UIPanGestureRecognizer) {
+    @objc func handlePan(_ recognizer: UIPanGestureRecognizer) {
         guard let swipeableView = swipeableView else { return }
         
         let translation = recognizer.translation(in: containerView)
@@ -140,7 +142,20 @@ class ViewManager : NSObject {
         }
     }
     
-    func handleTap(_ recognizer: UITapGestureRecognizer) {
+    func addTapRecognizer() {
+        for gesture in view.gestureRecognizers ?? [] {
+            if let tapGesture = gesture as? ZLTapGestureRecognizer {
+
+                // Remove previous tap gesture
+                view.removeGestureRecognizer(tapGesture)
+
+            }
+        }
+
+        view.addGestureRecognizer(ZLTapGestureRecognizer(target: self, action: #selector(ViewManager.handleTap(_:))))
+    }
+    
+    @objc func handleTap(_ recognizer: UITapGestureRecognizer) {
         guard let swipeableView = swipeableView, let topView = swipeableView.topView()  else { return }
         
         let location = recognizer.location(in: containerView)

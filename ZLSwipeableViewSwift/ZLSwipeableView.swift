@@ -62,7 +62,15 @@ open class ZLSwipeableView: UIView {
     open var didEnd: DidEndHandler?
     open var didSwipe: DidSwipeHandler?
     open var didCancel: DidCancelHandler?
-    open var didTap: DidTap?
+    open var didTap: DidTap? {
+        didSet {
+            guard didTap != nil else { return }
+            // Update all viewManagers to listen for taps
+            viewManagers.forEach { view, viewManager in
+                viewManager.addTapRecognizer()
+            }
+        }
+    }
     open var didDisappear: DidDisappear?
 
     // MARK: Private properties
@@ -153,6 +161,13 @@ open class ZLSwipeableView: UIView {
         insert(view, atIndex: allViews().count)
         updateViews()
     }
+    
+    open func discardTopCard() {
+        guard let topView = topView() else { return }
+        
+        remove(topView)
+        loadViews()
+    }
 
     open func discardViews() {
         for view in allViews() {
@@ -204,7 +219,7 @@ open class ZLSwipeableView: UIView {
             view.isUserInteractionEnabled = false
         }
 
-        guard let gestureRecognizers = activeViews.first?.gestureRecognizers , gestureRecognizers.filter({ gestureRecognizer in gestureRecognizer.state != .possible }).count == 0 else { return }
+        guard let gestureRecognizers = activeViews.first?.gestureRecognizers, gestureRecognizers.filter({ gestureRecognizer in gestureRecognizer.state != .possible }).count == 0 else { return }
 
         for i in 0 ..< activeViews.count {
             let view = activeViews[i]
@@ -247,7 +262,7 @@ extension ZLSwipeableView {
 
     static func defaultAnimateViewHandler() -> AnimateViewHandler {
         func toRadian(_ degree: CGFloat) -> CGFloat {
-            return degree * CGFloat(M_PI / 180)
+            return degree * CGFloat(Double.pi / 180)
         }
 
         func rotateView(_ view: UIView, forDegree degree: CGFloat, duration: TimeInterval, offsetFromCenter offset: CGPoint, swipeableView: ZLSwipeableView,  completion: ((Bool) -> Void)? = nil) {
